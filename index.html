@@ -38,7 +38,7 @@
 </div>
 
 <script>
-    function generateAlt() {
+    async function generateAlt() {
         const url = document.getElementById('url').value;
         const keyword = document.getElementById('keyword').value;
         const outputDiv = document.getElementById('output');
@@ -49,20 +49,30 @@
             return;
         }
 
+        // 1. UI Feedback
         outputDiv.style.display = 'block';
-        resultLabel.innerText = "Analyzing image...";
+        resultLabel.innerText = "AI is analyzing your image...";
 
-        // NOTE: In a production environment, you would call an AI API here.
-        // This is a simulation of the logic an ALT expert AI would follow.
-        setTimeout(() => {
-            let mockAlt = "A high-quality visual representation of the subject matter";
-            if (keyword) {
-                mockAlt += ` highlighting ${keyword} in a professional setting.`;
+        try {
+            // 2. The real "phone call" to your Netlify Function
+            const response = await fetch('/.netlify/functions/get-alt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imageUrl: url, keyword: keyword })
+            });
+
+            const data = await response.json();
+
+            // 3. Display the result from Gemini
+            if (data.alt_text) {
+                resultLabel.innerText = data.alt_text;
             } else {
-                mockAlt += " with a clean, minimalist background.";
+                resultLabel.innerText = "Error: " + (data.error || "Failed to get response.");
             }
-            resultLabel.innerText = mockAlt;
-        }, 1500);
+        } catch (error) {
+            resultLabel.innerText = "Connection error. Make sure you are viewing this via your Netlify URL!";
+            console.error("Error:", error);
+        }
     }
 </script>
 
