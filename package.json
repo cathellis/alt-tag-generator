@@ -2,6 +2,7 @@
   "name": "alt-tag-generator",
   "version": "1.0.0",
   "dependencies": {
-    "@google/generative-ai": "^0.11.0"
+    "@google/generative-ai": "^0.11.0",
+    "axios": "^1.6.0"
   }
 }
