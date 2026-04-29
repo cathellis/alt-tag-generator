@@ -7,9 +7,11 @@ exports.handler = async (event) => {
     try {
         const { imageUrl, keyword } = JSON.parse(event.body);
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        
+        // FIX: Using the explicit model version string
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
-        // 1. Fetch image with a 'User-Agent' header to bypass security blocks
+        // 1. Fetch image with a User-Agent to bypass security
         const imageResp = await axios.get(imageUrl, { 
             responseType: 'arraybuffer',
             headers: {
@@ -19,7 +21,7 @@ exports.handler = async (event) => {
         
         const imageData = Buffer.from(imageResp.data).toString('base64');
 
-        // 2. Format for Gemini
+        // 2. Prepare the payload
         const imagePart = {
             inlineData: {
                 data: imageData,
@@ -29,18 +31,20 @@ exports.handler = async (event) => {
 
         const prompt = `Provide a concise, objective ALT text for this image (under 125 characters). ${keyword ? `Integrate the keyword "${keyword}" naturally.` : ""} Do not start with "Image of" or "Photo of".`;
 
+        // 3. Generate content
         const result = await model.generateContent([prompt, imagePart]);
         const response = await result.response;
+        const text = response.text();
 
         return {
             statusCode: 200,
-            body: JSON.stringify({ alt_text: response.text() }),
+            body: JSON.stringify({ alt_text: text }),
         };
     } catch (error) {
-        console.error(error);
+        console.error("Function Error:", error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: "The host site is blocking access. Try right-clicking the image, 'Save As', and uploading to a site like Imgur first." }),
+            body: JSON.stringify({ error: "The AI is having trouble accessing that model or image. Please try again in a moment." }),
         };
     }
 };
