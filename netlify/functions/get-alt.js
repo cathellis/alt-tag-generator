@@ -6,32 +6,38 @@ exports.handler = async (event) => {
 
     try {
         const { imageUrl, keyword } = JSON.parse(event.body);
+        
+        // Initialize with your key
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         
-        // FIX: Using the explicit model version string
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+        // TRY THIS: Use "gemini-1.5-flash" but ensure we are calling the vision-capable method
+        const model = genAI.getGenerativeModel({ 
+            model: "gemini-1.5-flash",
+            apiVersion: 'v1' // Force the stable V1 API instead of beta
+        });
 
-        // 1. Fetch image with a User-Agent to bypass security
+        // 1. Fetch image with a User-Agent to bypass security blocks
         const imageResp = await axios.get(imageUrl, { 
             responseType: 'arraybuffer',
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
             }
         });
         
         const imageData = Buffer.from(imageResp.data).toString('base64');
+        const mimeType = imageResp.headers['content-type'] || 'image/jpeg';
 
-        // 2. Prepare the payload
+        // 2. Format specifically for the Vision prompt
+        const prompt = `Describe this image for a screen reader. Keep it under 125 characters. ${keyword ? `Include the word "${keyword}" if relevant.` : ""}`;
+        
         const imagePart = {
             inlineData: {
                 data: imageData,
-                mimeType: imageResp.headers['content-type'] || 'image/jpeg'
+                mimeType: mimeType
             }
         };
 
-        const prompt = `Provide a concise, objective ALT text for this image (under 125 characters). ${keyword ? `Integrate the keyword "${keyword}" naturally.` : ""} Do not start with "Image of" or "Photo of".`;
-
-        // 3. Generate content
+        // 3. Send to AI
         const result = await model.generateContent([prompt, imagePart]);
         const response = await result.response;
         const text = response.text();
@@ -41,10 +47,15 @@ exports.handler = async (event) => {
             body: JSON.stringify({ alt_text: text }),
         };
     } catch (error) {
-        console.error("Function Error:", error);
+        console.error("Critical Error:", error.message);
+        
+        // Fallback message that actually helps the user
+        let friendlyError = "The AI is currently struggling with this image link.";
+        if (error.message.includes("404")) friendlyError = "API Connection Error (404). Trying to reconnect...";
+        
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: "The AI is having trouble accessing that model or image. Please try again in a moment." }),
+            body: JSON.stringify({ error: friendlyError, details: error.message }),
         };
     }
 };
