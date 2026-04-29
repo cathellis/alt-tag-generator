@@ -1,1 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI ALT Text Generator</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; display: flex; justify-content: center; padding: 40px; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        h2 { color: #333; margin-top: 0; }
+        label { display: block; margin: 15px 0 5px; font-weight: bold; color: #555; }
+        input[type="text"] { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; background-color: #007bff; color: white; border: none; padding: 12px; border-radius: 6px; margin-top: 20px; cursor: pointer; font-size: 16px; transition: background 0.3s; }
+        button:hover { background-color: #0056b3; }
+        #output { margin-top: 25px; padding: 15px; background: #e9ecef; border-radius: 6px; display: none; }
+        .result-header { font-size: 12px; text-transform: uppercase; color: #888; margin-bottom: 5px; }
+        .alt-text { font-style: italic; color: #222; }
+    </style>
+</head>
+<body>
 
+<div class="container">
+    <h2>ALT Text Generator</h2>
+    <p>Generate accessible descriptions in seconds.</p>
+    
+    <label for="url">Image URL</label>
+    <input type="text" id="url" placeholder="https://example.com/image.jpg">
+
+    <label for="keyword">Target Keyword (Optional)</label>
+    <input type="text" id="keyword" placeholder="e.g. 'sustainable fashion'">
+
+    <button onclick="generateAlt()">Generate ALT Text</button>
+
+    <div id="output">
+        <div class="result-header">Suggested ALT Text:</div>
+        <div class="alt-text" id="resultLabel">Processing...</div>
+    </div>
+</div>
+
+<script>
+    function generateAlt() {
+        const url = document.getElementById('url').value;
+        const keyword = document.getElementById('keyword').value;
+        const outputDiv = document.getElementById('output');
+        const resultLabel = document.getElementById('resultLabel');
+
+        if (!url) {
+            alert("Please paste an image URL first!");
+            return;
+        }
+
+        outputDiv.style.display = 'block';
+        resultLabel.innerText = "Analyzing image...";
+
+        // NOTE: In a production environment, you would call an AI API here.
+        // This is a simulation of the logic an ALT expert AI would follow.
+        setTimeout(() => {
+            let mockAlt = "A high-quality visual representation of the subject matter";
+            if (keyword) {
+                mockAlt += ` highlighting ${keyword} in a professional setting.`;
+            } else {
+                mockAlt += " with a clean, minimalist background.";
+            }
+            resultLabel.innerText = mockAlt;
+        }, 1500);
+    }
+</script>
+
+</body>
+</html>
