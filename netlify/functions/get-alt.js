@@ -9,11 +9,17 @@ exports.handler = async (event) => {
         const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-        // 1. Fetch the image as raw data (this bypasses most blocks)
-        const imageResp = await axios.get(imageUrl, { responseType: 'arraybuffer' });
+        // 1. Fetch image with a 'User-Agent' header to bypass security blocks
+        const imageResp = await axios.get(imageUrl, { 
+            responseType: 'arraybuffer',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+        });
+        
         const imageData = Buffer.from(imageResp.data).toString('base64');
 
-        // 2. Prepare the payload for Gemini
+        // 2. Format for Gemini
         const imagePart = {
             inlineData: {
                 data: imageData,
@@ -21,9 +27,8 @@ exports.handler = async (event) => {
             }
         };
 
-        const prompt = `Provide a concise, objective ALT text for this image (under 125 characters). ${keyword ? `Integrate the keyword "${keyword}" naturally.` : ""} Do not start with "Image of".`;
+        const prompt = `Provide a concise, objective ALT text for this image (under 125 characters). ${keyword ? `Integrate the keyword "${keyword}" naturally.` : ""} Do not start with "Image of" or "Photo of".`;
 
-        // 3. Send raw image data + prompt to AI
         const result = await model.generateContent([prompt, imagePart]);
         const response = await result.response;
 
@@ -35,7 +40,7 @@ exports.handler = async (event) => {
         console.error(error);
         return {
             statusCode: 500,
-            body: JSON.stringify({ error: "The AI couldn't access this specific image. It might be blocked by the host." }),
+            body: JSON.stringify({ error: "The host site is blocking access. Try right-clicking the image, 'Save As', and uploading to a site like Imgur first." }),
         };
     }
 };
