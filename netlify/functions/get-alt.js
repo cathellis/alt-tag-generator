@@ -7,8 +7,8 @@ exports.handler = async (event) => {
         const { imageUrl, keyword } = JSON.parse(event.body);
         const apiKey = process.env.GEMINI_API_KEY;
         
-        // This is the direct direct "door" to Gemini 1.5 Flash
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        // THE FIX: Pointing the URL to the active 2.5 Flash model instead of the deprecated 1.5
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
         // 1. Fetch the image pixels
         const imageResp = await axios.get(imageUrl, { 
